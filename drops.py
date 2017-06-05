@@ -1,6 +1,8 @@
 import pymunk
 import pygame
 import time
+import random
+import hsluv
 
 class ShadowSpace(object):
     """Wrapper for the shadow simulation in pymunk and pygame"""
@@ -19,9 +21,18 @@ class ShadowSpace(object):
         self.balls = self.init_balls(30)
 
     def init_balls(self, n):
+        color_list = []
+        starting_hue = random.randint(0, 360)
+        lightness = 65
+        saturation = 65
+        for j in range(n):
+            hue = (starting_hue+j*100/float(n))%360
+            color_list.append(([hue, saturation, lightness]))
+        random.shuffle(color_list)
         ball_list = []
         for i in range(n):
-            ball = Ball(10, i*self.width/float(n))
+            red, green, blue = hsluv.hsluv_to_rgb(color_list[i])
+            ball = Ball(10, i*self.width/float(n), 0, (int(red*255), int(green*255), int(blue*255)))
             ball.add(self.space)
             ball_list.append(ball)
         return ball_list
