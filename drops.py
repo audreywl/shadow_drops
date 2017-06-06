@@ -6,20 +6,20 @@ import hsluv
 
 class ShadowSpace(object):
     """Wrapper for the shadow simulation in pymunk and pygame"""
-    def __init__(self):
-        #self.width = 960
-        #self.height = 640
+    def __init__(self, windowed=False):
         pygame.init()
         pygame.display.init()
-        self.surface = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
-        self.width = self.surface.get_width()
-        self.height = self.surface.get_height()
-        #self.surface = pygame.Surface((720, 640))
+        if windowed:
+            self.width = 960
+            self.height = 640
+            self.surface = pygame.display.set_mode((self.width, self.height))
+        else:
+            self.surface = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+            self.width = self.surface.get_width()
+            self.height = self.surface.get_height()
         self.surface.fill((255, 255, 255))
         self.space = pymunk.Space()
         self.space.gravity = 0, -800
-        #self.testball = Ball(10, 50)
-        #self.testball.add(self.space)
         self.balls = self.init_balls(30)
 
     def init_balls(self, n):
@@ -42,8 +42,16 @@ class ShadowSpace(object):
     def update(self):
         self.surface.fill((255, 255, 255))
         self.space.step(.02)
-        for ball in self.balls:
-            ball.draw(self.surface)
+        balls_exist = len(self.balls)
+        i = 0
+        while balls_exist:
+            if abs(self.balls[i].y) > self.height:
+                del self.balls[i]
+            else:
+                self.balls[i].draw(self.surface)
+            i += 1
+            if i >= len(self.balls):
+                balls_exist = False
         pygame.display.update()
 
 
