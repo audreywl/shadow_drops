@@ -5,14 +5,21 @@ import pymunk
 
 class Contour(object):
 
-    def __init__(self, mass):
+    def __init__(self, space):
         self.something = 0
-        self.body = pymunk.Body(mass)
+        self.space = space
         self.cap = cv2.VideoCapture(0)
         self.shadow_detected = False
 
-    def create_shadow(self, contour):
-        pass
+    def create_shadows(self, contours):
+        self.remove_shadows()
+        for cont in contours:
+            if cv2.contourArea(cont) < 50:
+                continue
+            else:
+                body = pymunk.Body(0,0,pymunk.Body.STATIC)
+                contour_shape = pymunk.Poly(body, tuple_contours)
+                self.space.add(body, contour_shape)
     def update_contours(self):
     	# Capture frame-by-frame
         ret, frame = cap.read()
@@ -40,23 +47,29 @@ class Contour(object):
             contours, hierarchy= cv2.findContours(img_dilation,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
         tuple_contours = self.convert_contour(contours)
-        if not self.shadow_detected:
-            self.contour_shape = pymunk.Poly(self.body, tuple_contours)
+        self.create_shadows(tuple_contours)
 
     def kill_video(self):
         # When everything done, release the capture
         cap.release()
         cv2.destroyAllWindows()
 
+    def remove_shadows(self):
+        for body in self.space.bodies:
+            if body.body_type == pymunk.Body.STATIC:
+                self.space.remove(body)
+
+
 
     def convert_contour(self, contour_list):
-        contour_lst_of_tuples = []
-        print contour_list
-        for i in contour_list:
-            for j in i:
-                for k in j:
-                    contour_lst_of_tuples.append(tuple(k))
-        return(contour_lst_of_tuples)
+        list_of_contours = []
+        for i in contour_list: #i is the individual contour
+            contour_lst_of_tuples = []
+            for j in i: #j is the point in the contour, which has an unnecessary dimension for some reason
+                k = np.squeeze(j)
+                contour_lst_of_tuples.append(tuple(k))
+            list_of_contours.append(contour_lst_of_tuples)
+        return(list_of_contours)
 
 if __name__ == '__main__':
     testContour = Contour(1)
