@@ -7,11 +7,13 @@ import hsluv
 class ShadowSpace(object):
     """Wrapper for the shadow simulation in pymunk and pygame"""
     def __init__(self):
-        self.width = 960
-        self.height = 640
+        #self.width = 960
+        #self.height = 640
         pygame.init()
         pygame.display.init()
-        self.surface = pygame.display.set_mode((self.width,self.height))
+        self.surface = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
+        self.width = self.surface.get_width()
+        self.height = self.surface.get_height()
         #self.surface = pygame.Surface((720, 640))
         self.surface.fill((255, 255, 255))
         self.space = pymunk.Space()
@@ -67,9 +69,16 @@ class Ball(object):
 
 if __name__ == '__main__':
     testSpace = ShadowSpace()
-    while True:
-        #testSpace.drawCircle()
-
+    running = True
+    while  running:
         #pygame.display.update()
         testSpace.update()
         time.sleep(.01)
+        current_event = pygame.event.poll()
+        #print current_event
+        if current_event.type == pygame.QUIT:
+            running = False
+        elif current_event.type == pygame.KEYDOWN and current_event.key == pygame.K_ESCAPE:
+            running = False
+            print 'QUIT!'
+            #testSpace.drawCircle()
