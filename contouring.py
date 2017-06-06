@@ -1,7 +1,5 @@
-
 import numpy as np
 import cv2
-#import cv2.cv as cv
 import pymunk
 
 
@@ -45,23 +43,32 @@ class Contour(object):
                 contours, hierarchy= cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
             #self.contour_object(contours)
+            tuple_contours = self.convert_contour(contours)
+            self.update_contour_object(tuple_contours)
             # draw contour on the dilated image
-            for c in contours:
-                cv2.drawContours(frame, [c], -1, (255,0,0), 3)
+            #for c in contours:
+                #cv2.drawContours(frame, [c], -1, (255,0,0), 3)
 
              # Display the resulting frame
-            cv2.imshow('frame',frame)
+            #cv2.imshow('frame',frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        #erod and dilateb
 
         # When everything done, release the capture
         cap.release()
         cv2.destroyAllWindows()
 
-    def contour_object(self, contour_list):
-        self.contour = pymunk.Poly(Body, contour_list)
-        print(self.contour)
+    def update_contour_object(self, contour_list):
+        self.contour = pymunk.Poly(self.body, contour_list)
+        #print(self.contour)
+
+    def convert_contour(self, contour_list):
+        contour_lst_of_tuples = []
+        for i in contour_list:
+            for j in i:
+                for k in j:
+                    contour_lst_of_tuples.append(tuple(k))
+        return(contour_lst_of_tuples)
 
 if __name__ == '__main__':
     testContour = Contour(1)
