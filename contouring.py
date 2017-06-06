@@ -7,7 +7,9 @@ class Contour(object):
 
     def __init__(self, mass):
         self.something = 0
-        self.body = pymunk.Body(mass)
+        self.mass = mass
+        #self.body = pymunk.Body(mass)
+        self.shadow_detected = False
 
     def video_contour(self):
         cap = cv2.VideoCapture(0)
@@ -45,7 +47,9 @@ class Contour(object):
 
             #self.contour_object(contours)
             tuple_contours = self.convert_contour(contours)
-            self.update_contour_object(tuple_contours)
+
+            if not self.shadow_detected:
+                self.create_contour_objects(tuple_contours)
             # draw contour on the dilated image
             for c in contours:
                 cv2.drawContours(frame, [c], -1, (255,0,0), 3)
@@ -59,17 +63,22 @@ class Contour(object):
         cap.release()
         cv2.destroyAllWindows()
 
-    def update_contour_object(self, contour_list):
-        self.contour = pymunk.Poly(self.body, contour_list)
+    def create_contour_objects(self, contour_list):
+        for contour in contour_list:
+            shape = pymunk.Poly(pymunk.Body(0, 0, pymunk.Body.KINEMATIC), contour)
+            #print 'shape'
         #print(self.contour)
 
     def convert_contour(self, contour_list):
-        contour_lst_of_tuples = []
-        for i in contour_list:
-            for j in i:
-                for k in j:
-                    contour_lst_of_tuples.append(tuple(k))
-        return(contour_lst_of_tuples)
+        #print contour_list
+        list_of_contours = []
+        for i in contour_list: #i is the individual contour
+            contour_lst_of_tuples = []
+            for j in i: #j is the point in the contour, which has an unnecessary dimension for some reason
+                k = np.squeeze(j)
+                contour_lst_of_tuples.append(tuple(k))
+            list_of_contours.append(contour_lst_of_tuples)
+        return(list_of_contours)
 
 if __name__ == '__main__':
     testContour = Contour(1)
