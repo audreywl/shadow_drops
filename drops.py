@@ -2,6 +2,7 @@ import pymunk
 import pygame
 import time
 import random
+from random import randint
 import hsluv
 import contouring
 
@@ -23,16 +24,10 @@ class ShadowSpace(object):
         self.space.gravity = 0, -800
         self.balls = self.init_balls(30)
 
-        ch = self.space.add_collision_handler(0, 0)
-        ch.data["surface"] = self.surface
-        ch.post_solve = self.collision
-
         self.ground = Ground(self.width/2, 450,10, self.width)
         l1 = self.ground.create_Ground()
         self.space.add(l1)
 
-    def collision(self, arbiter, space, data):
-        pass
 
     def init_balls(self, n):
         color_list = []
@@ -66,11 +61,30 @@ class ShadowSpace(object):
                 del self.balls[i]
             else:
                 self.balls[i].draw(self.surface)
+            if randint(0,100) == 3:
+                self.random_ball()
             i += 1
             if i >= len(self.balls):
                 balls_exist = False
 
         pygame.display.update()
+
+    def random_ball(self):
+        color_list = []
+        ball_list = self.balls
+        starting_hue = random.randint(0, 360)
+        lightness = 65
+        saturation = 65
+        for j in range(30):
+            hue = (starting_hue+j*100/float(30))%360
+            color_list.append(([hue, saturation, lightness]))
+        random.shuffle(color_list)
+        red, green, blue = hsluv.hsluv_to_rgb(color_list[randint(0,29)])
+        ball = Ball(10, randint(0,30)*self.width/float(randint(1,30)), 0, (int(red*255), int(green*255), int(blue*255)), 10)
+        ball.add(self.space)
+        ball_list.append(ball)
+        self.balls = ball_list
+
 
     #def check_collision()
 
@@ -83,6 +97,7 @@ class Ground(object):
         self.width = width
         self.color = (150,200,50)
         self.body = pymunk.Body(body_type = pymunk.Body.STATIC)
+        self.body.elasticity = 0.999
         self.body.position = (self.x,-self.y)
 
     def create_Ground(self):
