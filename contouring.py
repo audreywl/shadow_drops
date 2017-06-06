@@ -8,8 +8,9 @@ class Contour(object):
     def __init__(self, space, camera):
         self.something = 0
         self.space = space
-        self.cap = cv2.VideoCapture(camera)
+        self.camera = camera
         self.shadow_detected = False
+        self.img = cv2.imread('/home/audrey/Software_of_Summer/shadow_drops/squares.png')
 
     def create_shadows(self, contours):
         self.remove_shadows()
@@ -19,7 +20,12 @@ class Contour(object):
             self.space.add(body, contour_shape)
     def update_contours(self):
     	# Capture frame-by-frame
-        ret, frame = self.cap.read()
+        #self.cap = cv2.VideoCapture(self.camera)
+
+        #ret, frame = self.cap.read()
+        #self.img = cv2.imread('/home/audrey/Software_of_Summer/shadow_drops/squares.png')
+        frame = self.img
+        #print self.img
 
         # transform image to grayscale and blur
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -27,10 +33,11 @@ class Contour(object):
 
         # color thresholds for binary image
         lower_color = np.array([0,0,0], dtype = "uint8")
-        upper_color = np.array([30,30,30], dtype = "uint8")
+        upper_color = np.array([250,250,250], dtype = "uint8")
 
         # create binary image
         binary_img = cv2.inRange(blur, lower_color, upper_color)
+        #cv2.imshow('binary',binary_img)
 
         # dilate image
         # kernel = np.ones((5,5), np.uint8)
@@ -42,8 +49,9 @@ class Contour(object):
              _, contours, hierarchy= cv2.findContours(binary_img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
         else:
             contours, hierarchy= cv2.findContours(binary_img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-        #cv2.drawContours(binary_img, contours, -1, (0,255,0), 3)
-        #cv2.imshow('binary',binary_img)
+
+        cv2.drawContours(binary_img, contours, -1, (0,255,0), 10)
+        self.contours_img = binary_img
         tuple_contours = self.convert_contour(contours)
         self.create_shadows(tuple_contours)
 

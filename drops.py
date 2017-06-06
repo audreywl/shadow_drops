@@ -5,6 +5,8 @@ import random
 from random import randint
 import hsluv
 import contouring
+import cv2
+import numpy as np
 
 class ShadowSpace(object):
     """Wrapper for the shadow simulation in pymunk and pygame"""
@@ -12,8 +14,8 @@ class ShadowSpace(object):
         pygame.init()
         pygame.display.init()
         if windowed:
-            self.width = 1900
-            self.height = 1000
+            self.width = 640
+            self.height = 480
             self.surface = pygame.display.set_mode((self.width, self.height))
         else:
             self.surface = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
@@ -28,6 +30,7 @@ class ShadowSpace(object):
         l1 = self.ground.create_Ground()
         self.space.add(l1)
         self.contours = contouring.Contour(self.space, 0)
+        cv2.namedWindow('img')
 
 
     def init_balls(self, n):
@@ -68,8 +71,12 @@ class ShadowSpace(object):
             i += 1
             if i >= len(self.balls):
                 balls_exist = False
+        #print self.contours.img
+        cv2.imshow('img', self.contours.img)
+        cv2.imshow('contours_img', self.contours.contours_img)
+        #cv2.waitKey()
 
-        pygame.display.update()
+        #pygame.display.update()
 
     def random_ball(self):
         color_list = []
@@ -140,8 +147,10 @@ if __name__ == '__main__':
         #pygame.display.update()
         testSpace.update()
         time.sleep(.03)
+        cv2.waitKey(30)
         current_event = pygame.event.poll()
         #print current_event
+        print 'running'
         if current_event.type == pygame.QUIT:
             running = False
             testSpace.kill_video()
