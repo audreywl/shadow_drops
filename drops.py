@@ -3,6 +3,7 @@ import pygame
 import time
 import random
 import hsluv
+import contouring
 
 class ShadowSpace(object):
     """Wrapper for the shadow simulation in pymunk and pygame"""
@@ -22,6 +23,17 @@ class ShadowSpace(object):
         self.space.gravity = 0, -800
         self.balls = self.init_balls(30)
 
+        ch = self.space.add_collision_handler(0, 0)
+        ch.data["surface"] = self.surface
+        ch.post_solve = self.collision
+
+        self.ground = Ground(self.width/2, 450,10, self.width)
+        l1 = self.ground.create_Ground()
+        self.space.add(l1)
+
+    def collision(self, arbiter, space, data):
+        pass
+
     def init_balls(self, n):
         color_list = []
         starting_hue = random.randint(0, 360)
@@ -34,10 +46,15 @@ class ShadowSpace(object):
         ball_list = []
         for i in range(n):
             red, green, blue = hsluv.hsluv_to_rgb(color_list[i])
-            ball = Ball(10, i*self.width/float(n), 0, (int(red*255), int(green*255), int(blue*255)))
+            ball = Ball(10, i*self.width/float(n), 0, (int(red*255), int(green*255), int(blue*255)), 10)
             ball.add(self.space)
             ball_list.append(ball)
+
+        hugeball = Ball(50, 100, -400, (int(red*255), int(green*255), int(blue*255)), 10)
+        hugeball.add(self.space)
+        ball_list.append(hugeball)
         return ball_list
+        
 
     def update(self):
         self.surface.fill((255, 255, 255))
@@ -52,8 +69,30 @@ class ShadowSpace(object):
             i += 1
             if i >= len(self.balls):
                 balls_exist = False
+
         pygame.display.update()
 
+    #def check_collision()
+
+class Ground(object):
+
+    def __init__(self, x=0, y=0, mass=0, width=0):
+        self.x = 0
+        self.y = y-10
+        self.mass = mass
+        self.width = width
+        self.color = (150,200,50)
+        self.body = pymunk.Body(body_type = pymunk.Body.STATIC)
+        self.body.position = (self.x,-self.y)
+
+    def create_Ground(self):
+        print(-self.y)
+        l1 = pymunk.Segment(self.body, (self.x, -self.y), (self.width, -self.y), 10)
+        return(l1)
+
+    def draw(self, surface):
+        #print self.y
+        pygame.draw.rect(surface, self.color, (int(self.x), abs(int(self.y)), self.width, 10),0)
 
 class Ball(object):
     """it's a ball. it's got image and physics attributes"""
@@ -66,13 +105,15 @@ class Ball(object):
         self.moment = pymunk.moment_for_circle(mass, 0, radius)
         self.body = pymunk.Body(self.mass, self.moment)
         self.shape = pymunk.Circle(self.body, self.radius)
+        self.shape.elasticity = 0.999
         self.body.position = self.x, self.y
 
     def add(self, space):
         space.add(self.body, self.shape)
+
     def draw(self, surface):
         self.x, self.y = self.body.position
-        #print self.y
+       
         pygame.draw.circle(surface, self.color, (int(self.x), abs(int(self.y))), self.radius)
 
 if __name__ == '__main__':
