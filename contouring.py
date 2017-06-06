@@ -1,7 +1,7 @@
 
 import numpy as np
 import cv2
-import cv2.cv as cv
+#import cv2.cv as cv
 import pymunk
 
 
@@ -12,7 +12,7 @@ class Contour(object):
         self.body = pymunk.Body(mass)
 
     def video_contour(self):
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(1)
 
         while(True):
         	# Capture frame-by-frame
@@ -33,13 +33,17 @@ class Contour(object):
             kernel = np.ones((5,5), np.uint8)
             img_erode = cv2.erode(binary_img, kernel, iterations=1)
             img_dilation = cv2.dilate(img_erode, kernel, iterations=1)
-            #opening = cv2.morphologyEx(img_dilation, cv2.MORPH_OPEN, kernel)
+            opening = cv2.morphologyEx(img_dilation, cv2.MORPH_OPEN, kernel)
 
             # find thresholds for contouring
             ret,thresh = cv2.threshold(opening,0,115,cv2.THRESH_BINARY)
 
             # contour
-            contours, hierarchy= cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+            if cv2.__version__.startswith('3.'):
+                 _, contours, hierarchy= cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+            else:
+                contours, hierarchy= cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
             #self.contour_object(contours)
             # draw contour on the dilated image
             for c in contours:
