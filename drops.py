@@ -12,8 +12,8 @@ class ShadowSpace(object):
         pygame.init()
         pygame.display.init()
         if windowed:
-            self.width = 960
-            self.height = 640
+            self.width = 1900
+            self.height = 1000
             self.surface = pygame.display.set_mode((self.width, self.height))
         else:
             self.surface = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
@@ -22,11 +22,12 @@ class ShadowSpace(object):
         self.surface.fill((255, 255, 255))
         self.space = pymunk.Space()
         self.space.gravity = 0, -800
-        self.balls = self.init_balls(30)
+        self.balls = self.init_balls(10)
 
         self.ground = Ground(self.width/2, 450,10, self.width)
         l1 = self.ground.create_Ground()
         self.space.add(l1)
+        self.contours = contouring.Contour(self.space, 0)
 
 
     def init_balls(self, n):
@@ -49,10 +50,11 @@ class ShadowSpace(object):
         hugeball.add(self.space)
         ball_list.append(hugeball)
         return ball_list
-        
+
 
     def update(self):
         self.surface.fill((255, 255, 255))
+        self.contours.update_contours()
         self.space.step(.02)
         balls_exist = len(self.balls)
         i = 0
@@ -61,7 +63,7 @@ class ShadowSpace(object):
                 del self.balls[i]
             else:
                 self.balls[i].draw(self.surface)
-            if randint(0,100) == 3:
+            if randint(0,1000) == 3:
                 self.random_ball()
             i += 1
             if i >= len(self.balls):
@@ -128,21 +130,23 @@ class Ball(object):
 
     def draw(self, surface):
         self.x, self.y = self.body.position
-       
+
         pygame.draw.circle(surface, self.color, (int(self.x), abs(int(self.y))), self.radius)
 
 if __name__ == '__main__':
-    testSpace = ShadowSpace()
+    testSpace = ShadowSpace(True)
     running = True
     while  running:
         #pygame.display.update()
         testSpace.update()
-        time.sleep(.01)
+        time.sleep(.03)
         current_event = pygame.event.poll()
         #print current_event
         if current_event.type == pygame.QUIT:
             running = False
+            testSpace.kill_video()
         elif current_event.type == pygame.KEYDOWN and current_event.key == pygame.K_ESCAPE:
             running = False
+            testSpace.kill_video()
             print 'QUIT!'
             #testSpace.drawCircle()
