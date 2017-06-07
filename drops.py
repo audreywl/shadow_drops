@@ -14,8 +14,8 @@ class ShadowSpace(object):
         pygame.init()
         pygame.display.init()
         if windowed:
-            self.width = 640
-            self.height = 480
+            self.width = 1500
+            self.height = 900
             self.surface = pygame.display.set_mode((self.width, self.height))
         else:
             self.surface = pygame.display.set_mode((0,0), pygame.FULLSCREEN)
@@ -24,13 +24,13 @@ class ShadowSpace(object):
         self.surface.fill((255, 255, 255))
         self.space = pymunk.Space()
         self.space.gravity = 0, -800
-        self.balls = self.init_balls(10)
+        self.balls = self.init_balls(40)
 
-        self.ground = Ground(self.width/2, 450,10, self.width)
-        l1 = self.ground.create_Ground()
-        self.space.add(l1)
-        self.contours = contouring.Contour(self.space, 0)
-        cv2.namedWindow('contours_img')
+        #self.ground = Ground(self.width/2, 450,10, self.width)
+        #l1 = self.ground.create_Ground()
+        #self.space.add(l1)
+        self.contours = contouring.Contour(self.space, 0, self.height)
+        #cv2.namedWindow('contours_img')
 
 
     def init_balls(self, n):
@@ -45,22 +45,26 @@ class ShadowSpace(object):
         ball_list = []
         for i in range(n):
             red, green, blue = hsluv.hsluv_to_rgb(color_list[i])
-            ball = Ball(10, i*self.width/float(n), 0, (int(red*255), int(green*255), int(blue*255)), 10)
+            ball = Ball(10, i*self.width/float(n), -30, (int(red*255), int(green*255), int(blue*255)), 10)
             ball.add(self.space)
             ball_list.append(ball)
 
-        hugeball = Ball(50, 100, -400, (int(red*255), int(green*255), int(blue*255)), 10)
-        hugeball.add(self.space)
-        ball_list.append(hugeball)
+        #hugeball = Ball(50, 100, -400, (int(red*255), int(green*255), int(blue*255)), 10)
+        #hugeball.add(self.space)
+        #ball_list.append(hugeball)
         return ball_list
 
 
     def update(self):
         self.surface.fill((255, 255, 255))
-        self.contours.update_contours()
+        tuple_contours = self.contours.update_contours()
+        self.create_shadows(tuple_contours)
         self.space.step(.02)
+        self.space.reindex_static()
+        #print self.space.bodies
         balls_exist = len(self.balls)
         i = 0
+        # [self.balls[i].draw(self.surface) for i in range(len(self.balls))]
         while balls_exist:
             if abs(self.balls[i].y) > self.height:
                 del self.balls[i]
@@ -73,8 +77,8 @@ class ShadowSpace(object):
                 balls_exist = False
         #print self.contours.img
         #cv2.imshow('img', self.contours.img)
-        cv2.imshow('contours_img', self.contours.contours_img)
-        #cv2.waitKey()
+        #cv2.imshow('contours_img', self.contours.contours_img)
+        #cv2.waitKey(5000)
 
         pygame.display.update()
 
@@ -93,6 +97,27 @@ class ShadowSpace(object):
         ball.add(self.space)
         ball_list.append(ball)
         self.balls = ball_list
+
+    def create_shadows(self, contours):
+        self.remove_shadows()
+        #print 'more shadows'
+        print len(contours)
+        for cont in contours:
+            #print cont
+            #print 'new shadow'
+            body = pymunk.Body(0,0,pymunk.Body.STATIC)
+            contour_shape = pymunk.Poly(body, cont)
+            self.space.add(body, contour_shape)
+            self.space.reindex_shape(contour_shape)
+            self.space.reindex_shapes_for_body(body)
+
+
+    def remove_shadows(self):
+        for body in self.space.bodies:
+            if body.body_type == pymunk.Body.STATIC:
+                self.space.remove(body)
+                for shape in body.shapes:
+                    self.space.remove(shape)
 
 
     #def check_collision()
@@ -141,7 +166,7 @@ class Ball(object):
         pygame.draw.circle(surface, self.color, (int(self.x), abs(int(self.y))), self.radius)
 
 if __name__ == '__main__':
-    testSpace = ShadowSpace(True)
+    testSpace = ShadowSpace()
     running = True
     while  running:
         #pygame.display.update()
