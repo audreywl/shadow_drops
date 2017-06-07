@@ -10,7 +10,8 @@ class Contour(object):
         self.space = space
         self.camera = camera
         self.shadow_detected = False
-        self.img = cv2.imread('/home/audrey/Software_of_Summer/shadow_drops/squares.png')
+        self.cap = cv2.VideoCapture(self.camera)
+        #self.img = cv2.imread('/home/audrey/Software_of_Summer/shadow_drops/square.png')
 
     def create_shadows(self, contours):
         self.remove_shadows()
@@ -20,11 +21,12 @@ class Contour(object):
             self.space.add(body, contour_shape)
     def update_contours(self):
     	# Capture frame-by-frame
-        #self.cap = cv2.VideoCapture(self.camera)
 
-        #ret, frame = self.cap.read()
+
+        ret, frame = self.cap.read()
+        img = frame
         #self.img = cv2.imread('/home/audrey/Software_of_Summer/shadow_drops/squares.png')
-        frame = self.img
+        #frame = self.img
         #print self.img
 
         # transform image to grayscale and blur
@@ -50,8 +52,11 @@ class Contour(object):
         else:
             contours, hierarchy= cv2.findContours(binary_img,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
 
-        cv2.drawContours(binary_img, contours, -1, (0,255,0), 10)
-        self.contours_img = binary_img
+        #self.contours_img = binary_img
+        #print contours
+        #for c in contours:
+        cv2.drawContours(img, contours, -1, (240,100,0), 3)
+        self.contours_img = img
         tuple_contours = self.convert_contour(contours)
         self.create_shadows(tuple_contours)
 

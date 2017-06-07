@@ -30,7 +30,7 @@ class ShadowSpace(object):
         l1 = self.ground.create_Ground()
         self.space.add(l1)
         self.contours = contouring.Contour(self.space, 0)
-        cv2.namedWindow('img')
+        cv2.namedWindow('contours_img')
 
 
     def init_balls(self, n):
@@ -72,11 +72,11 @@ class ShadowSpace(object):
             if i >= len(self.balls):
                 balls_exist = False
         #print self.contours.img
-        cv2.imshow('img', self.contours.img)
+        #cv2.imshow('img', self.contours.img)
         cv2.imshow('contours_img', self.contours.contours_img)
         #cv2.waitKey()
 
-        #pygame.display.update()
+        pygame.display.update()
 
     def random_ball(self):
         color_list = []
@@ -150,7 +150,7 @@ if __name__ == '__main__':
         cv2.waitKey(30)
         current_event = pygame.event.poll()
         #print current_event
-        print 'running'
+        #print 'running'
         if current_event.type == pygame.QUIT:
             running = False
             testSpace.kill_video()
