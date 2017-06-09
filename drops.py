@@ -11,6 +11,7 @@ import numpy as np
 class ShadowSpace(object):
     """Wrapper for the shadow simulation in pymunk and pygame"""
     def __init__(self, windowed=False):
+        #start the pygame window
         pygame.init()
         pygame.display.init()
         if windowed:
@@ -22,56 +23,57 @@ class ShadowSpace(object):
             self.width = self.surface.get_width()
             self.height = self.surface.get_height()
         self.surface.fill((255, 255, 255))
+
+        #make the pymunk space
         self.space = pymunk.Space()
         self.space.gravity = 0, -800
+
+        #add balls to the space
         self.balls = self.init_balls(40)
 
+        #option to add ground to the space
         #self.ground = Ground(self.width/2, 450,10, self.width)
-        #l1 = self.ground.create_Ground()
-        #self.space.add(l1)
+        #self.ground.add(self.space)
+
+        #create the contour-processing object
         self.contours = contouring.Contour(self.space, 0, self.height)
+
+        #option to use openCV to debug
         #cv2.namedWindow('contours_img')
 
 
     def init_balls(self, n):
-        color_list = []
-        starting_hue = random.randint(0, 360)
-        lightness = 65
-        saturation = 65
-        for j in range(n):
-            hue = (starting_hue+j*100/float(n))%360
-            color_list.append(([hue, saturation, lightness]))
-        random.shuffle(color_list)
         ball_list = []
+        self.color_list = pretty_colors(n)
         for i in range(n):
-            red, green, blue = hsluv.hsluv_to_rgb(color_list[i])
-            ball = Ball(10, i*self.width/float(n), -30, (int(red*255), int(green*255), int(blue*255)), 10)
+            ball = Ball(10, i*self.width/float(n), -30, self.color_list[i], 10)
             ball.add(self.space)
             ball_list.append(ball)
 
-        #hugeball = Ball(50, 100, -400, (int(red*255), int(green*255), int(blue*255)), 10)
+        #hugeball = Ball(50, 100, -400, color_list[0], 10)
         #hugeball.add(self.space)
         #ball_list.append(hugeball)
         return ball_list
 
-
     def update(self):
+        #remove all previous pygame drawings
         self.surface.fill((255, 255, 255))
+        #update what shadows are being seen
         tuple_contours = self.contours.update_contours()
         self.create_shadows(tuple_contours)
+        #step the pymunk simulation forward
         self.space.step(.02)
         self.space.reindex_static()
-        #print self.space.bodies
+        if randint(0,10) == 3:
+            self.random_ball()
+        #draw all the new ball positions, but remove them from the list when they fall offscreen
         balls_exist = len(self.balls)
         i = 0
-        # [self.balls[i].draw(self.surface) for i in range(len(self.balls))]
         while balls_exist:
             if abs(self.balls[i].y) > self.height:
                 del self.balls[i]
             else:
                 self.balls[i].draw(self.surface)
-            if randint(0,1000) == 3:
-                self.random_ball()
             i += 1
             if i >= len(self.balls):
                 balls_exist = False
@@ -83,20 +85,10 @@ class ShadowSpace(object):
         pygame.display.update()
 
     def random_ball(self):
-        color_list = []
-        ball_list = self.balls
-        starting_hue = random.randint(0, 360)
-        lightness = 65
-        saturation = 65
-        for j in range(30):
-            hue = (starting_hue+j*100/float(30))%360
-            color_list.append(([hue, saturation, lightness]))
-        random.shuffle(color_list)
-        red, green, blue = hsluv.hsluv_to_rgb(color_list[randint(0,29)])
-        ball = Ball(10, randint(0,30)*self.width/float(randint(1,30)), 0, (int(red*255), int(green*255), int(blue*255)), 10)
+        x = randint(0,30)*self.width/float(randint(1,30))
+        ball = Ball(10, x, 0, random.choice(self.color_list), 10)
         ball.add(self.space)
-        ball_list.append(ball)
-        self.balls = ball_list
+        self.balls.append(ball)
 
     def create_shadows(self, contours):
         self.remove_shadows()
@@ -133,11 +125,11 @@ class Ground(object):
         self.body = pymunk.Body(body_type = pymunk.Body.STATIC)
         self.body.elasticity = 0.999
         self.body.position = (self.x,-self.y)
+        self.shape = pymunk.Segment(self.body, (self.x, -self.y), (self.width, -self.y), 10)
 
-    def create_Ground(self):
-        print(-self.y)
-        l1 = pymunk.Segment(self.body, (self.x, -self.y), (self.width, -self.y), 10)
-        return(l1)
+    def add(self, space):
+        #print(-self.y)
+        space.add(self.body, self.shape)
 
     def draw(self, surface):
         #print self.y
@@ -164,6 +156,17 @@ class Ball(object):
         self.x, self.y = self.body.position
 
         pygame.draw.circle(surface, self.color, (int(self.x), abs(int(self.y))), self.radius)
+
+def pretty_colors(n, lightness=65, saturation=65):
+    """returns a list of random colors (rbg tuples) with length n that are all similar hues with the same lightness and saturation according to hsluv standard"""
+    color_list = []
+    starting_hue = random.randint(0, 360)
+    for j in range(n):
+        hue = (starting_hue+j*100/float(n))%360
+        red, green, blue = hsluv.hsluv_to_rgb(([hue, saturation, lightness]))
+        color_list.append((int(red*255), int(green*255), int(blue*255)))
+    random.shuffle(color_list)
+    return color_list
 
 if __name__ == '__main__':
     testSpace = ShadowSpace()
