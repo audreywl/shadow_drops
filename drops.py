@@ -26,7 +26,7 @@ class ShadowSpace(object):
 
         #make the pymunk space
         self.space = pymunk.Space()
-        self.space.gravity = 0, -800
+        self.space.gravity = -400, -800
 
         #add balls to the space
         self.balls = self.init_balls(40)
@@ -43,6 +43,7 @@ class ShadowSpace(object):
 
 
     def init_balls(self, n):
+        """create the rain of balls at the beginning of the simulation"""
         ball_list = []
         self.color_list = pretty_colors(n)
         for i in range(n):
@@ -56,6 +57,7 @@ class ShadowSpace(object):
         return ball_list
 
     def update(self):
+        """step forward the physics simulation and the pygame visualization"""
         #remove all previous pygame drawings
         self.surface.fill((255, 255, 255))
         #update what shadows are being seen
@@ -78,62 +80,40 @@ class ShadowSpace(object):
             if i >= len(self.balls):
                 balls_exist = False
         #print self.contours.img
-        #cv2.imshow('img', self.contours.img)
+        cv2.imshow('img', self.contours.debug_img)
         #cv2.imshow('contours_img', self.contours.contours_img)
         #cv2.waitKey(5000)
-
         pygame.display.update()
+        print self.space.shapes
 
     def random_ball(self):
+        """drop a randomly placed ball from the top of the simulation"""
         x = randint(0,30)*self.width/float(randint(1,30))
         ball = Ball(10, x, 0, random.choice(self.color_list), 10)
         ball.add(self.space)
         self.balls.append(ball)
 
     def create_shadows(self, contours):
+        """use the countours to add an updated shadow shape to the simulation"""
         self.remove_shadows()
-        #print 'more shadows'
-        print len(contours)
+        #print len(contours)
         for cont in contours:
-            #print cont
-            #print 'new shadow'
             body = pymunk.Body(0,0,pymunk.Body.STATIC)
             contour_shape = pymunk.Poly(body, cont)
+            #print('vertices')
+            #print(contour_shape.get_vertices())
             self.space.add(body, contour_shape)
             self.space.reindex_shape(contour_shape)
             self.space.reindex_shapes_for_body(body)
 
 
     def remove_shadows(self):
+        """remove all shadows left from the previous step in simulation"""
         for body in self.space.bodies:
             if body.body_type == pymunk.Body.STATIC:
                 self.space.remove(body)
-                for shape in body.shapes:
+                for shape in body.shapes: #pymunk can assign multiple shapes to a body. there shouldn't be multiple, but just in case
                     self.space.remove(shape)
-
-
-    #def check_collision()
-
-class Ground(object):
-
-    def __init__(self, x=0, y=0, mass=0, width=0):
-        self.x = 0
-        self.y = y-10
-        self.mass = mass
-        self.width = width
-        self.color = (150,200,50)
-        self.body = pymunk.Body(body_type = pymunk.Body.STATIC)
-        self.body.elasticity = 0.999
-        self.body.position = (self.x,-self.y)
-        self.shape = pymunk.Segment(self.body, (self.x, -self.y), (self.width, -self.y), 10)
-
-    def add(self, space):
-        #print(-self.y)
-        space.add(self.body, self.shape)
-
-    def draw(self, surface):
-        #print self.y
-        pygame.draw.rect(surface, self.color, (int(self.x), abs(int(self.y)), self.width, 10),0)
 
 class Ball(object):
     """it's a ball. it's got image and physics attributes"""
@@ -150,12 +130,32 @@ class Ball(object):
         self.body.position = self.x, self.y
 
     def add(self, space):
+        """put the ball in the simulation"""
         space.add(self.body, self.shape)
 
     def draw(self, surface):
+        """make a pygame drawing of the ball"""
         self.x, self.y = self.body.position
-
         pygame.draw.circle(surface, self.color, (int(self.x), abs(int(self.y))), self.radius)
+
+class Ground(object):
+    """optional class for putting a ground in the simulation, not used in normal operation"""
+    def __init__(self, x=0, y=0, mass=0, width=0):
+        self.x = 0
+        self.y = y-10
+        self.mass = mass
+        self.width = width
+        self.color = (150,200,50)
+        self.body = pymunk.Body(body_type = pymunk.Body.STATIC)
+        self.body.elasticity = 0.999
+        self.body.position = (self.x,-self.y)
+        self.shape = pymunk.Segment(self.body, (self.x, -self.y), (self.width, -self.y), 10)
+
+    def add(self, space):
+        space.add(self.body, self.shape)
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.color, (int(self.x), abs(int(self.y)), self.width, 10),0)
 
 def pretty_colors(n, lightness=65, saturation=65):
     """returns a list of random colors (rbg tuples) with length n that are all similar hues with the same lightness and saturation according to hsluv standard"""
@@ -169,21 +169,17 @@ def pretty_colors(n, lightness=65, saturation=65):
     return color_list
 
 if __name__ == '__main__':
-    testSpace = ShadowSpace()
+    testSpace = ShadowSpace(True)
     running = True
     while  running:
-        #pygame.display.update()
         testSpace.update()
         time.sleep(.03)
         cv2.waitKey(30)
         current_event = pygame.event.poll()
-        #print current_event
-        #print 'running'
         if current_event.type == pygame.QUIT:
             running = False
-            testSpace.kill_video()
+            testSpace.contours.kill_video()
         elif current_event.type == pygame.KEYDOWN and current_event.key == pygame.K_ESCAPE:
             running = False
-            testSpace.kill_video()
+            testSpace.contours.kill_video()
             print 'QUIT!'
-            #testSpace.drawCircle()
