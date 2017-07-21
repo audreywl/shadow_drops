@@ -3,6 +3,7 @@ import pygame
 import time
 import random
 from random import randint
+import sys
 import hsluv
 import contouring
 import cv2
@@ -26,7 +27,7 @@ class ShadowSpace(object):
 
         #make the pymunk space
         self.space = pymunk.Space()
-        self.space.gravity = -400, -800
+        self.space.gravity = 0, -800
 
         #add balls to the space
         self.balls = self.init_balls(40)
@@ -36,7 +37,8 @@ class ShadowSpace(object):
         #self.ground.add(self.space)
 
         #create the contour-processing object
-        self.contours = contouring.Contour(self.space, 0, self.height)
+
+        self.contours = contouring.Contour(self.space, int(sys.argv[1]), self.height)
 
         #option to use openCV to debug
         #cv2.namedWindow('contours_img')
@@ -72,7 +74,7 @@ class ShadowSpace(object):
         balls_exist = len(self.balls)
         i = 0
         while balls_exist:
-            if abs(self.balls[i].y) > self.height:
+            if abs(self.balls[i].y) > self.height or self.balls[i].x < 0 or self.balls[i].x > self.width:
                 del self.balls[i]
             else:
                 self.balls[i].draw(self.surface)
@@ -80,11 +82,11 @@ class ShadowSpace(object):
             if i >= len(self.balls):
                 balls_exist = False
         #print self.contours.img
-        cv2.imshow('img', self.contours.debug_img)
+        #cv2.imshow('img', self.contours.debug_img)
         #cv2.imshow('contours_img', self.contours.contours_img)
         #cv2.waitKey(5000)
         pygame.display.update()
-        print self.space.shapes
+        #print self.space.shapes
 
     def random_ball(self):
         """drop a randomly placed ball from the top of the simulation"""
@@ -169,7 +171,7 @@ def pretty_colors(n, lightness=65, saturation=65):
     return color_list
 
 if __name__ == '__main__':
-    testSpace = ShadowSpace(True)
+    testSpace = ShadowSpace(False)
     running = True
     while  running:
         testSpace.update()

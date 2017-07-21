@@ -54,8 +54,8 @@ class Contour(object):
                 contour_lst_of_tuples = []
                 for j in i: #j is the point in the contour, which has an unnecessary dimension for some reason
                     k = np.squeeze(j)
-                    x = float(k[0])
-                    y = float(k[1])-self.height #because pymunk is negative for some f*cking reason
+                    x = float(k[0])*2
+                    y = (-float(k[1])*2) #-self.height) #because pymunk is negative for some f*cking reason
                     # TODO: fix the scalaing problem here
                     contour_lst_of_tuples.append((x,y))
                 list_of_contours.append(contour_lst_of_tuples)
